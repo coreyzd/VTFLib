@@ -185,7 +185,7 @@ set_target_properties(DevIL PROPERTIES
 if(MSVC)
 	target_compile_options(DevIL PRIVATE /wd4267 /wd4244 /wd4996)
 else()
-	target_compile_options(DevIL PRIVATE -w)
+	target_compile_options(DevIL PRIVATE -w $<$<COMPILE_LANGUAGE:CXX>:-Wno-register>)
 endif()
 
 # ---------------------------------------------------------------------------
