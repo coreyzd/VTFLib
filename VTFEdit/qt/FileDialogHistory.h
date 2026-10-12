@@ -28,7 +28,8 @@ namespace VTFEdit
 	namespace FileDialogHistory
 	{
 		inline QString s_sFileDirectory; // vtf and vmt
-		inline QString s_sImageDirectory; // imported / exported images
+		inline QString s_sImportDirectory; // imported images
+		inline QString s_sExportDirectory; // exported images
 
 		// the path handed to file dialog
 		inline QString path(const QString &sDirectory, const QString &sSuggestedName)

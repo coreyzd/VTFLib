@@ -3085,7 +3085,7 @@ namespace VTFEdit
 	{
 		// keep in sync with IsImportableFileName
 		const QStringList sFileNames = QFileDialog::getOpenFileNames(this, tr("Import"),
-			FileDialogHistory::s_sImageDirectory,
+			FileDialogHistory::s_sImportDirectory,
 			tr("Supported Files (*.bmp *.dds *.exr *.gif *.hdr *.jpg *.jpeg *.pfm *.png *.tga);;"
 				"BMP Files (*.bmp);;DDS Files (*.dds);;EXR Files (*.exr);;GIF Files (*.gif);;"
 				"HDR Files (*.hdr);;JPEG Files (*.jpg *.jpeg);;PFM Files (*.pfm);;"
@@ -3094,7 +3094,7 @@ namespace VTFEdit
 
 		if(!sFileNames.isEmpty())
 		{
-			FileDialogHistory::remember(FileDialogHistory::s_sImageDirectory, sFileNames.first());
+			FileDialogHistory::remember(FileDialogHistory::s_sImportDirectory, sFileNames.first());
 
 			import(sFileNames);
 		}
@@ -3103,14 +3103,14 @@ namespace VTFEdit
 	void MainWindow::onExport()
 	{
 		const QString sFileName = QFileDialog::getSaveFileName(this, tr("Export"),
-			FileDialogHistory::path(FileDialogHistory::s_sImageDirectory,
+			FileDialogHistory::path(FileDialogHistory::s_sExportDirectory,
 				QFileInfo(m_sFileName).completeBaseName()),
 			tr("BMP Files (*.bmp);;EXR Files (*.exr);;HDR Files (*.hdr);;JPEG Files (*.jpg *.jpeg);;"
 				"PFM Files (*.pfm);;PNG Files (*.png);;TGA Files (*.tga)"));
 
 		if(!sFileName.isEmpty())
 		{
-			FileDialogHistory::remember(FileDialogHistory::s_sImageDirectory, sFileName);
+			FileDialogHistory::remember(FileDialogHistory::s_sExportDirectory, sFileName);
 
 			exportImage(sFileName);
 		}
@@ -3119,14 +3119,14 @@ namespace VTFEdit
 	void MainWindow::onExportAll()
 	{
 		const QString sFileName = QFileDialog::getSaveFileName(this, tr("Export All"),
-			FileDialogHistory::path(FileDialogHistory::s_sImageDirectory,
+			FileDialogHistory::path(FileDialogHistory::s_sExportDirectory,
 				QFileInfo(m_sFileName).completeBaseName()),
 			tr("BMP Files (*.bmp);;EXR Files (*.exr);;HDR Files (*.hdr);;JPEG Files (*.jpg *.jpeg);;"
 				"PFM Files (*.pfm);;PNG Files (*.png);;TGA Files (*.tga)"));
 
 		if(!sFileName.isEmpty())
 		{
-			FileDialogHistory::remember(FileDialogHistory::s_sImageDirectory, sFileName);
+			FileDialogHistory::remember(FileDialogHistory::s_sExportDirectory, sFileName);
 
 			exportAllImages(sFileName);
 		}
@@ -3897,10 +3897,26 @@ namespace VTFEdit
 				if(QDir(sVal).exists())
 					FileDialogHistory::s_sFileDirectory = sVal;
 			}
+			else if(sArg.compare(QLatin1String("VTFEdit.LastImportDirectory"), Qt::CaseInsensitive) == 0)
+			{
+				if(QDir(sVal).exists())
+					FileDialogHistory::s_sImportDirectory = sVal;
+			}
+			else if(sArg.compare(QLatin1String("VTFEdit.LastExportDirectory"), Qt::CaseInsensitive) == 0)
+			{
+				if(QDir(sVal).exists())
+					FileDialogHistory::s_sExportDirectory = sVal;
+			}
+			// old configs shared one directory for import and export
 			else if(sArg.compare(QLatin1String("VTFEdit.LastImageDirectory"), Qt::CaseInsensitive) == 0)
 			{
 				if(QDir(sVal).exists())
-					FileDialogHistory::s_sImageDirectory = sVal;
+				{
+					if(FileDialogHistory::s_sImportDirectory.isEmpty())
+						FileDialogHistory::s_sImportDirectory = sVal;
+					if(FileDialogHistory::s_sExportDirectory.isEmpty())
+						FileDialogHistory::s_sExportDirectory = sVal;
+				}
 			}
 
 			else if(sArg.compare(QLatin1String("VmtEditor.FontFamily"), Qt::CaseInsensitive) == 0)
@@ -4107,7 +4123,8 @@ namespace VTFEdit
 		Stream << "VTFEdit.SingleInstance = " << boolText(m_pSingleInstanceAction->isChecked()) << "\n";
 		Stream << "VTFEdit.CubemapCross = " << boolText(m_pCubemapCrossAction->isChecked()) << "\n";
 		Stream << "VTFEdit.LastFileDirectory = " << FileDialogHistory::s_sFileDirectory << "\n";
-		Stream << "VTFEdit.LastImageDirectory = " << FileDialogHistory::s_sImageDirectory << "\n";
+		Stream << "VTFEdit.LastImportDirectory = " << FileDialogHistory::s_sImportDirectory << "\n";
+		Stream << "VTFEdit.LastExportDirectory = " << FileDialogHistory::s_sExportDirectory << "\n";
 		Stream << "VmtEditor.FontFamily = " << m_VmtEditorSettings.sFontFamily << "\n";
 		Stream << "VmtEditor.FontSize = " << m_VmtEditorSettings.iFontSize << "\n";
 		Stream << "VmtEditor.TabSize = " << m_VmtEditorSettings.iTabSize << "\n";
