@@ -107,14 +107,10 @@ set(WITH_FUZZ OFF CACHE BOOL "" FORCE)
 set(WITH_CRT_DLL ON CACHE BOOL "" FORCE)
 
 set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
-# DevIL is a shared library, so every object it links (including the SIMD
-# objects libjpeg-turbo builds separately) must be position independent.
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # libjpeg-turbo replaces a default install prefix with /opt/<project>
 # (c:/<project>-gcc64 on MinGW); don't let it change the parent's.
 set(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OFF)
 add_subdirectory("${JPEG_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/libjpeg-turbo" EXCLUDE_FROM_ALL)
-unset(CMAKE_POSITION_INDEPENDENT_CODE)
 unset(CMAKE_POLICY_VERSION_MINIMUM)
 
 target_include_directories(jpeg-static INTERFACE
@@ -372,6 +368,17 @@ target_include_directories(CMP_Compressonator PUBLIC
 )
 
 target_link_libraries(CMP_Compressonator PUBLIC CMP_Core)
+# Compressonator aligns its SIMD buffers with __declspec(align(N)) when _WIN32
+# is defined. MinGW maps __declspec(x) to __attribute__((x)), and "align"
+# isn't a GCC/Clang attribute, so the alignment is silently dropped and the
+# aligned AVX/AVX-512 loads and stores crash. Spell it the GNU way.
+if(MINGW)
+	foreach(cmp_target CMP_Core CMP_Core_SSE CMP_Core_AVX CMP_Core_AVX512 CMP_Compressonator)
+		if(TARGET ${cmp_target})
+			target_compile_options(${cmp_target} PRIVATE "-Dalign(x)=aligned(x)")
+		endif()
+	endforeach()
+endif()
 # bc6h_encode.cpp uses std::isinf/std::isnan but only includes <math.h>,
 # which isn't enough with libc++ (e.g. MSYS2 CLANG64).
 if(NOT MSVC)
