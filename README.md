@@ -72,10 +72,26 @@ sudo cmake --install build            # defaults to /usr/local
 # or: cmake --install build --prefix ~/.local
 ```
 
+### Dolphin / KDE thumbnails
+
+On KDE Plasma, the build also produces a thumbnail plugin, so `.vtf` files show previews in Dolphin's icons and information panel. It is built automatically when the KF6 KIO development files are installed:
+
+```
+# Fedora / Nobara
+sudo dnf install kf6-kio-devel extra-cmake-modules
+# Debian / Ubuntu
+sudo apt install libkf6kio-dev extra-cmake-modules
+# Arch
+sudo pacman -S kio extra-cmake-modules
+```
+
+Re-run the `cmake -B build ...` configure step after installing them, build, and `sudo cmake --install build`. The plugin goes into Qt's plugin directory (e.g. `/usr/lib64/qt6/plugins/kf6/thumbcreator`), because that is the only place KDE looks; override with `-DVTFLIB_KDE_THUMBNAILER_DIR=...` if needed. Then enable **Valve Texture Format** in Dolphin under *Configure Dolphin → Interface → Previews* and restart Dolphin.
+
 Build options:
 
 * `VTFLIB_BUILD_VTFCMD` (default ON) - build VTFCmd
 * `VTFLIB_BUILD_VTFEDIT` (default ON) - build VTFEdit++ (requires Qt 6)
+* `VTFLIB_BUILD_KDE_THUMBNAILER` (default ON, Linux only) - build the Dolphin thumbnail plugin if KF6 KIO is found
 
 Binaries are written to `build/bin`
 

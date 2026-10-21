@@ -1,0 +1,10 @@
+{
+    "CacheThumbnail": true,
+    "KPlugin": {
+        "MimeTypes": [
+            "image/x-vtf",
+            "image/vnd.valve.source.texture"
+        ],
+        "Name": "Valve Texture Format"
+    }
+}
