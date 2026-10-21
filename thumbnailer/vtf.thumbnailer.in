@@ -1,0 +1,4 @@
+[Thumbnailer Entry]
+TryExec=@VTF_THUMBNAILER_PATH@
+Exec=@VTF_THUMBNAILER_PATH@ -s %s %i %o
+MimeType=image/x-vtf;image/vnd.valve.source.texture;
