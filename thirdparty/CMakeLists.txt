@@ -107,7 +107,14 @@ set(WITH_FUZZ OFF CACHE BOOL "" FORCE)
 set(WITH_CRT_DLL ON CACHE BOOL "" FORCE)
 
 set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
+# DevIL is a shared library, so every object it links (including the SIMD
+# objects libjpeg-turbo builds separately) must be position independent.
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+# libjpeg-turbo replaces a default install prefix with /opt/<project>
+# (c:/<project>-gcc64 on MinGW); don't let it change the parent's.
+set(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OFF)
 add_subdirectory("${JPEG_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/libjpeg-turbo" EXCLUDE_FROM_ALL)
+unset(CMAKE_POSITION_INDEPENDENT_CODE)
 unset(CMAKE_POLICY_VERSION_MINIMUM)
 
 target_include_directories(jpeg-static INTERFACE
@@ -298,6 +305,12 @@ target_include_directories(CMP_Core PUBLIC
 	"${CMP_DIR}/applications/_libs/cmp_math"
 )
 target_link_libraries(CMP_Core PRIVATE CMP_Core_SSE CMP_Core_AVX CMP_Core_AVX512)
+# cmp_core's shaders use SSE4.1 intrinsics whenever _M_X64 is defined, which
+# MinGW defines too. MSVC accepts them without a flag; MinGW GCC/Clang need
+# -msse4.1 (as with MSVC, the result needs an SSE4.1 CPU).
+if(MINGW AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|AMD64|amd64)$")
+	target_compile_options(CMP_Core PUBLIC -msse4.1)
+endif()
 set_target_properties(CMP_Core PROPERTIES
 	POSITION_INDEPENDENT_CODE ON
 	MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
@@ -359,6 +372,13 @@ target_include_directories(CMP_Compressonator PUBLIC
 )
 
 target_link_libraries(CMP_Compressonator PUBLIC CMP_Core)
+# bc6h_encode.cpp uses std::isinf/std::isnan but only includes <math.h>,
+# which isn't enough with libc++ (e.g. MSYS2 CLANG64).
+if(NOT MSVC)
+	set_source_files_properties("${CMP_DIR}/cmp_compressonatorlib/bc6h/bc6h_encode.cpp"
+		TARGET_DIRECTORY CMP_Compressonator
+		PROPERTIES COMPILE_OPTIONS "-include;cmath")
+endif()
 
 set_target_properties(CMP_Compressonator PROPERTIES
 	POSITION_INDEPENDENT_CODE ON

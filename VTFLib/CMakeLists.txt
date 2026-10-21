@@ -58,7 +58,7 @@ target_include_directories(vtflib
 		"${CMAKE_CURRENT_SOURCE_DIR}"
 		"${VTFLIB_THIRDPARTY}/include"
 	INTERFACE
-		"${CMAKE_SOURCE_DIR}/lib"
+		"${PROJECT_SOURCE_DIR}/lib"
 )
 
 target_link_libraries(vtflib PRIVATE
@@ -91,7 +91,7 @@ if(VTFLIB_BUILD_STATIC)
 			"${CMAKE_CURRENT_SOURCE_DIR}"
 			"${VTFLIB_THIRDPARTY}/include"
 		INTERFACE
-			"${CMAKE_SOURCE_DIR}/lib"
+			"${PROJECT_SOURCE_DIR}/lib"
 	)
 
 	target_link_libraries(vtflib_static PRIVATE
