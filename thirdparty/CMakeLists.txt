@@ -2,6 +2,11 @@
 
 set(THIRDPARTY_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 
+# Static deps get linked into shared libs (DevIL, VTFLib++), so everything must be PIC.
+# Setting it per-target is not enough: libjpeg-turbo builds its SIMD code in
+# separate object libraries that never see jpeg-static's properties.
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 foreach(submodule DevIL zlib libpng libjpeg-turbo Imath openexr)
 	if(NOT EXISTS "${THIRDPARTY_DIR}/${submodule}/CMakeLists.txt" AND
 	   NOT EXISTS "${THIRDPARTY_DIR}/${submodule}/README.md")

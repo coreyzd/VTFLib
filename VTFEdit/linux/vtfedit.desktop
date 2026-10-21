@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=VTFEdit++
+GenericName=VTF Texture Editor
+Comment=View, create and convert Valve Texture Format (.vtf) and material (.vmt) files
+Exec=VTFEdit++ %F
+Icon=vtfedit
+Terminal=false
+Categories=Graphics;2DGraphics;RasterGraphics;Viewer;Development;
+MimeType=image/x-vtf;text/x-vmt;
+StartupWMClass=VTFEdit++

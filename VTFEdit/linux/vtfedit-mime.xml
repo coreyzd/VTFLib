@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+	<mime-type type="image/x-vtf">
+		<comment>Valve Texture Format</comment>
+		<magic priority="50">
+			<match type="string" offset="0" value="VTF\0"/>
+		</magic>
+		<glob pattern="*.vtf"/>
+	</mime-type>
+	<mime-type type="text/x-vmt">
+		<comment>Valve Material Type</comment>
+		<sub-class-of type="text/plain"/>
+		<glob pattern="*.vmt"/>
+	</mime-type>
+</mime-info>

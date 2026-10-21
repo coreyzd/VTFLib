@@ -26,6 +26,14 @@ endforeach()
 
 set(VTFLIB_THIRDPARTY "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty")
 
+if(NOT WIN32)
+	include(GNUInstallDirs)
+	# Find libVTFLib++.so / libDevIL.so next to the binaries in build/bin,
+	# and in ../lib (or lib64) once installed, without needing LD_LIBRARY_PATH.
+	set(CMAKE_BUILD_RPATH_USE_ORIGIN ON)
+	set(CMAKE_BUILD_RPATH "$ORIGIN")
+endif()
+
 add_subdirectory(thirdparty)
 
 add_subdirectory(VTFLib)
@@ -36,6 +44,25 @@ endif()
 
 if(VTFLIB_BUILD_VTFEDIT)
 	add_subdirectory(VTFEdit)
+endif()
+
+if(NOT WIN32)
+	# Set here, after all subprojects, so it matches the final CMAKE_INSTALL_LIBDIR
+	# (some bundled deps re-include GNUInstallDirs and can change it).
+	set(VTFLIB_INSTALL_RPATH "$ORIGIN;$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
+	foreach(target vtflib DevIL vtfcmd vtfedit)
+		if(TARGET ${target})
+			set_target_properties(${target} PROPERTIES INSTALL_RPATH "${VTFLIB_INSTALL_RPATH}")
+		endif()
+	endforeach()
+
+	install(TARGETS vtflib DevIL
+		LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+	)
+	install(FILES lib/VTFLib.h DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/VTFLib++")
+	if(VTFLIB_BUILD_VTFCMD)
+		install(TARGETS vtfcmd RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
+	endif()
 endif()
 
 if(VTFLIB_BUILD_FUZZER)

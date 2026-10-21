@@ -42,8 +42,11 @@ qt_add_executable(vtfedit
 	qt/AboutDialog.h
 	qt/FileDialogHistory.h
 	qt/VTFLibQt.h
-	qt/VTFEdit.rc
 )
+
+if(WIN32)
+	target_sources(vtfedit PRIVATE qt/VTFEdit.rc)
+endif()
 
 qt_add_resources(vtfedit "vtfedit_resources"
 	PREFIX "/"
@@ -82,3 +85,16 @@ target_link_libraries(vtfedit PRIVATE
 	Qt6::Network
 )
 
+if(NOT WIN32)
+	install(TARGETS vtfedit RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
+	install(FILES linux/vtfedit.desktop
+		DESTINATION "${CMAKE_INSTALL_DATADIR}/applications"
+	)
+	install(FILES linux/vtfedit.png
+		DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor/256x256/apps"
+	)
+	install(FILES linux/vtfedit-mime.xml
+		DESTINATION "${CMAKE_INSTALL_DATADIR}/mime/packages"
+		RENAME vtfedit.xml
+	)
+endif()

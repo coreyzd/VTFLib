@@ -41,10 +41,41 @@ cmake -B build -DCMAKE_PREFIX_PATH=<path-to-Qt6> -A x64
 cmake --build build --config Release
 ```
 
+### Linux
+
+Install a compiler, CMake, Ninja, NASM (for libjpeg-turbo's SIMD code) and Qt 6 base development files:
+
+```
+# Fedora / Nobara
+sudo dnf install gcc-c++ cmake ninja-build nasm qt6-qtbase-devel
+
+# Debian / Ubuntu
+sudo apt install build-essential cmake ninja-build nasm qt6-base-dev
+
+# Arch
+sudo pacman -S base-devel cmake ninja nasm qt6-base
+```
+
+Then build (no `-A x64`, and Qt is found automatically when installed from your distro):
+
+```
+git submodule update --init --recursive
+cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+cmake --build build
+./build/bin/VTFEdit++
+```
+
+The binaries in `build/bin` find `libVTFLib++.so` and `libDevIL.so` next to themselves, so the folder can be run in place or copied elsewhere. To install system-wide (adds a desktop entry, icon and `.vtf`/`.vmt` MIME types):
+
+```
+sudo cmake --install build            # defaults to /usr/local
+# or: cmake --install build --prefix ~/.local
+```
+
 Build options:
 
 * `VTFLIB_BUILD_VTFCMD` (default ON) - build VTFCmd
-* `VTFLIB_BUILD_VTFEDIT` (default ON for Windows) - build VTFEdit++
+* `VTFLIB_BUILD_VTFEDIT` (default ON) - build VTFEdit++ (requires Qt 6)
 
 Binaries are written to `build/bin`
 
