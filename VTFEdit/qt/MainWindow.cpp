@@ -158,7 +158,7 @@ namespace VTFEdit
 			// keeo in sync with onImport
 			static const char *const szExtensions[] =
 			{
-				".bmp", ".dds", ".exr", ".gif", ".hdr", ".jpg", ".jpeg", ".pfm", ".png", ".tga"
+				".bmp", ".dds", ".exr", ".gif", ".hdr", ".ico", ".jpg", ".jpeg", ".pfm", ".png", ".psd", ".tga"
 			};
 
 			for(const char *const szExtension : szExtensions)
@@ -3128,10 +3128,10 @@ namespace VTFEdit
 		// keep in sync with IsImportableFileName
 		const QStringList sFileNames = QFileDialog::getOpenFileNames(this, tr("Import"),
 			FileDialogHistory::s_sImportDirectory,
-			tr("Supported Files (*.bmp *.dds *.exr *.gif *.hdr *.jpg *.jpeg *.pfm *.png *.tga);;"
+			tr("Supported Files (*.bmp *.dds *.exr *.gif *.hdr *.ico *.jpg *.jpeg *.pfm *.png *.psd *.tga);;"
 				"BMP Files (*.bmp);;DDS Files (*.dds);;EXR Files (*.exr);;GIF Files (*.gif);;"
-				"HDR Files (*.hdr);;JPEG Files (*.jpg *.jpeg);;PFM Files (*.pfm);;"
-				"PNG Files (*.png);;TGA Files (*.tga);;"
+				"HDR Files (*.hdr);;ICO Files (*.ico);;JPEG Files (*.jpg *.jpeg);;PFM Files (*.pfm);;"
+				"PNG Files (*.png);;PSD Files (*.psd);;TGA Files (*.tga);;"
 				"All Files (*.*)"));
 
 		if(!sFileNames.isEmpty())
@@ -3142,13 +3142,43 @@ namespace VTFEdit
 		}
 	}
 
+	QString MainWindow::getExportFileName(const QString &sTitle)
+	{
+		const QStringList sFilters = {
+			tr("BMP Files (*.bmp)"), tr("EXR Files (*.exr)"), tr("HDR Files (*.hdr)"),
+			tr("JPEG Files (*.jpg *.jpeg)"), tr("PFM Files (*.pfm)"), tr("PNG Files (*.png)"),
+			tr("TGA Files (*.tga)") };
+
+		const QString sPattern = QStringLiteral("*.") + FileDialogHistory::s_sExportExtension;
+		QString sSelectedFilter = sFilters.first();
+		for(const QString &sFilter : sFilters)
+		{
+			if(sFilter.contains(sPattern + QLatin1Char(' ')) || sFilter.contains(sPattern + QLatin1Char(')')))
+			{
+				sSelectedFilter = sFilter;
+				break;
+			}
+		}
+
+		const QString sBaseName = QFileInfo(m_sFileName).completeBaseName();
+		const QString sFileName = QFileDialog::getSaveFileName(this, sTitle,
+			FileDialogHistory::path(FileDialogHistory::s_sExportDirectory,
+				sBaseName.isEmpty() ? sBaseName : sBaseName + QLatin1Char('.') + FileDialogHistory::s_sExportExtension),
+			sFilters.join(QStringLiteral(";;")), &sSelectedFilter);
+
+		if(!sFileName.isEmpty())
+		{
+			const QString sExtension = QFileInfo(sFileName).suffix().toLower();
+			if(!sExtension.isEmpty())
+				FileDialogHistory::s_sExportExtension = sExtension;
+		}
+
+		return sFileName;
+	}
+
 	void MainWindow::onExport()
 	{
-		const QString sFileName = QFileDialog::getSaveFileName(this, tr("Export"),
-			FileDialogHistory::path(FileDialogHistory::s_sExportDirectory,
-				QFileInfo(m_sFileName).completeBaseName()),
-			tr("BMP Files (*.bmp);;EXR Files (*.exr);;HDR Files (*.hdr);;JPEG Files (*.jpg *.jpeg);;"
-				"PFM Files (*.pfm);;PNG Files (*.png);;TGA Files (*.tga)"));
+		const QString sFileName = getExportFileName(tr("Export"));
 
 		if(!sFileName.isEmpty())
 		{
@@ -3160,11 +3190,7 @@ namespace VTFEdit
 
 	void MainWindow::onExportAll()
 	{
-		const QString sFileName = QFileDialog::getSaveFileName(this, tr("Export All"),
-			FileDialogHistory::path(FileDialogHistory::s_sExportDirectory,
-				QFileInfo(m_sFileName).completeBaseName()),
-			tr("BMP Files (*.bmp);;EXR Files (*.exr);;HDR Files (*.hdr);;JPEG Files (*.jpg *.jpeg);;"
-				"PFM Files (*.pfm);;PNG Files (*.png);;TGA Files (*.tga)"));
+		const QString sFileName = getExportFileName(tr("Export All"));
 
 		if(!sFileName.isEmpty())
 		{
@@ -3949,6 +3975,11 @@ namespace VTFEdit
 				if(QDir(sVal).exists())
 					FileDialogHistory::s_sExportDirectory = sVal;
 			}
+			else if(sArg.compare(QLatin1String("VTFEdit.LastExportExtension"), Qt::CaseInsensitive) == 0)
+			{
+				if(!sVal.isEmpty())
+					FileDialogHistory::s_sExportExtension = sVal.toLower();
+			}
 			// old configs shared one directory for import and export
 			else if(sArg.compare(QLatin1String("VTFEdit.LastImageDirectory"), Qt::CaseInsensitive) == 0)
 			{
@@ -4167,6 +4198,7 @@ namespace VTFEdit
 		Stream << "VTFEdit.LastFileDirectory = " << FileDialogHistory::s_sFileDirectory << "\n";
 		Stream << "VTFEdit.LastImportDirectory = " << FileDialogHistory::s_sImportDirectory << "\n";
 		Stream << "VTFEdit.LastExportDirectory = " << FileDialogHistory::s_sExportDirectory << "\n";
+		Stream << "VTFEdit.LastExportExtension = " << FileDialogHistory::s_sExportExtension << "\n";
 		Stream << "VmtEditor.FontFamily = " << m_VmtEditorSettings.sFontFamily << "\n";
 		Stream << "VmtEditor.FontSize = " << m_VmtEditorSettings.iFontSize << "\n";
 		Stream << "VmtEditor.TabSize = " << m_VmtEditorSettings.iTabSize << "\n";

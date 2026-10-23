@@ -223,6 +223,7 @@ namespace VTFEdit
 		void import(const QStringList &sFileNames);
 		void createFromImages(const std::vector<vlByte *> &vImageData, vlUInt uiWidth, vlUInt uiHeight,
 			bool bHasAlpha, bool bFloat, const QString &sSourceFileName);
+		QString getExportFileName(const QString &sTitle);
 		void exportImage(const QString &sFileName);
 		void exportAllImages(const QString &sFileName);
 
