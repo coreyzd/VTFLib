@@ -594,6 +594,13 @@ namespace VTFLib
 		*/
 		vlBool GenerateMipmaps(vlUInt uiFace, vlUInt uiFrame, VTFMipmapFilter MipmapFilter, vlBool bSRGB);
 
+		//! Remove the smallest MIP maps from the image.
+		/*!
+			\param uiMipmapCount is the number of MIP levels to keep
+			\return true on success, otherwise false.
+		*/
+		vlBool TruncateMipmaps(vlUInt uiMipmapCount);
+
 		//! Generate a thumbnail image.
 		/*!
 			Generates the thumbnail image for the VTF image by copying an existing MIP map

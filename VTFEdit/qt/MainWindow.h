@@ -177,6 +177,8 @@ namespace VTFEdit
 		void onEditSheet();
 		void onRemoveSheet();
 
+		void onRemoveMipmaps();
+
 		void onEditHotspot();
 		void onRemoveHotspot();
 
@@ -344,6 +346,7 @@ namespace VTFEdit
 		QAction *m_pRemoveSheetAction;
 		QAction *m_pEditHotspotAction;
 		QAction *m_pRemoveHotspotAction;
+		QAction *m_pRemoveMipmapsAction;
 		QAction *m_pCreateVmtFileAction;
 		QAction *m_pConvertFolderAction;
 		QAction *m_pAutoCreateVmtFileAction;

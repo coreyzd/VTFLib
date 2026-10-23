@@ -46,6 +46,7 @@
 #include <QFormLayout>
 #include <QGroupBox>
 #include <QHBoxLayout>
+#include <QInputDialog>
 #include <QIcon>
 #include <QKeyEvent>
 #include <QLabel>
@@ -580,6 +581,10 @@ namespace VTFEdit
 		m_pRemoveHotspotAction = new QAction(tr("&Remove"), this);
 		connect(m_pRemoveHotspotAction, &QAction::triggered, this, &MainWindow::onRemoveHotspot);
 
+		m_pRemoveMipmapsAction = new QAction(tr("Remove &Mipmaps..."), this);
+		m_pRemoveMipmapsAction->setToolTip(tr("Discard the mipmap data."));
+		connect(m_pRemoveMipmapsAction, &QAction::triggered, this, &MainWindow::onRemoveMipmaps);
+
 		m_pCreateVmtFileAction = new QAction(tr("Create &VMT File"), this);
 		connect(m_pCreateVmtFileAction, &QAction::triggered, this, &MainWindow::onCreateVmtFile);
 
@@ -659,6 +664,9 @@ namespace VTFEdit
 		pHotspotMenu->setToolTipsVisible(true);
 		pHotspotMenu->addAction(m_pEditHotspotAction);
 		pHotspotMenu->addAction(m_pRemoveHotspotAction);
+
+		m_pTextureMenu->addSeparator();
+		m_pTextureMenu->addAction(m_pRemoveMipmapsAction);
 
 		QMenu *pOptionsMenu = menuBar()->addMenu(tr("&Options"));
 		pOptionsMenu->addAction(m_pAutoCreateVmtFileAction);
@@ -1743,6 +1751,40 @@ namespace VTFEdit
 		m_pVTFFile->SetResourceData(VTF_RSRC_SHEET, 0, nullptr);
 
 		updateResourceList();
+		onVtfPropertyChanged();
+	}
+
+	void MainWindow::onRemoveMipmaps()
+	{
+		if(m_pVTFFile == nullptr)
+		{
+			return;
+		}
+
+		const int iMipmapCount = static_cast<int>(m_pVTFFile->GetMipmapCount());
+		if(iMipmapCount <= 1)
+		{
+			QMessageBox::information(this, QApplication::applicationName(), tr("This texture has no mipmaps to remove."));
+			return;
+		}
+
+		bool bOk = false;
+		const int iKeep = QInputDialog::getInt(this, QApplication::applicationName(),
+			tr("Mipmap levels to keep (1 keeps only the full size image, currently %1):").arg(iMipmapCount),
+			1, 1, iMipmapCount - 1, 1, &bOk);
+		if(!bOk)
+		{
+			return;
+		}
+
+		if(!m_pVTFFile->TruncateMipmaps(static_cast<vlUInt>(iKeep)))
+		{
+			QMessageBox::critical(this, QApplication::applicationName(),
+				tr("Error removing mipmaps:\n%1").arg(QString::fromLatin1(vlGetLastError())));
+			return;
+		}
+
+		showVtfFile(m_pVTFFile);
 		onVtfPropertyChanged();
 	}
 
