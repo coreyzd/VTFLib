@@ -177,6 +177,8 @@ namespace VTFEdit
 		void onEditSheet();
 		void onRemoveSheet();
 
+		void onRemoveMipmaps();
+
 		void onEditHotspot();
 		void onRemoveHotspot();
 
@@ -221,6 +223,7 @@ namespace VTFEdit
 		void import(const QStringList &sFileNames);
 		void createFromImages(const std::vector<vlByte *> &vImageData, vlUInt uiWidth, vlUInt uiHeight,
 			bool bHasAlpha, bool bFloat, const QString &sSourceFileName);
+		QString getExportFileName(const QString &sTitle);
 		void exportImage(const QString &sFileName);
 		void exportAllImages(const QString &sFileName);
 
@@ -344,6 +347,7 @@ namespace VTFEdit
 		QAction *m_pRemoveSheetAction;
 		QAction *m_pEditHotspotAction;
 		QAction *m_pRemoveHotspotAction;
+		QAction *m_pRemoveMipmapsAction;
 		QAction *m_pCreateVmtFileAction;
 		QAction *m_pConvertFolderAction;
 		QAction *m_pAutoCreateVmtFileAction;

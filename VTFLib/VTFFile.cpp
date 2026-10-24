@@ -2858,6 +2858,40 @@ vlBool CVTFFile::SetAuxCompressionMethod(vlShort sMethod)
 	return vlTrue;
 }
 
+vlBool CVTFFile::TruncateMipmaps(vlUInt uiMipmapCount)
+{
+	if(!this->IsLoaded() || !this->GetHasImage())
+	{
+		LastError.Set("No image to remove mipmaps from.");
+		return vlFalse;
+	}
+
+	if(uiMipmapCount == 0 || uiMipmapCount > this->Header->MipCount)
+	{
+		LastError.SetFormatted("Mipmap count %u is out of the 1 to %u range.", uiMipmapCount, (vlUInt)this->Header->MipCount);
+		return vlFalse;
+	}
+
+	if(uiMipmapCount == this->Header->MipCount)
+		return vlTrue;
+
+	vlUInt uiNewSize = this->ComputeImageSize(this->Header->Width, this->Header->Height, this->Header->Depth, uiMipmapCount, this->Header->ImageFormat) * this->GetFrameCount() * this->GetFaceCount();
+	assert(uiNewSize <= this->uiImageBufferSize);
+
+	vlByte *lpNewImageData = new vlByte[uiNewSize];
+	memcpy(lpNewImageData, this->lpImageData + (this->uiImageBufferSize - uiNewSize), uiNewSize);
+
+	delete []this->lpImageData;
+	this->lpImageData = lpNewImageData;
+	this->uiImageBufferSize = uiNewSize;
+	this->Header->MipCount = (vlByte)uiMipmapCount;
+
+	// Gotta redo it
+	this->DestroyAuxCompression();
+
+	return vlTrue;
+}
+
 //
 // GenerateMipmaps()
 // Generate mipmaps from the first mipmap level.

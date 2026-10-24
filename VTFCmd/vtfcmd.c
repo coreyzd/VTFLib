@@ -58,6 +58,7 @@ vlBool bDistanceAlpha = vlFalse;					// Encode the alpha channel as a distance f
 vlSingle sDistanceAlphaSpread = 1.0f;				// Width of the distance field gradient in output pixels.
 vlUInt uiDistanceAlphaReduce = 1;					// Amount to shrink the image by after computing the field.
 vlByte bDistanceAlphaThreshold = 10;				// Source alpha above which a pixel is inside the shape.
+vlUInt uiKeepMipmaps = 0;							// Mipmap levels to keep when stripping .vtf files
 
 void Pause();
 void Print(const vlChar *lpFormat, ...);
@@ -538,6 +539,22 @@ int main(int argc, char* argv[])
 			{
 				CreateOptions.bMipmaps = vlFalse;
 			}
+			else if(stricmp(argv[i], "-stripmips") == 0)
+			{
+				uiKeepMipmaps = 1;
+			}
+			else if(stricmp(argv[i], "-keepmips") == 0)
+			{
+				if(i + 1 < argc && sscanf(argv[++i], "%u", &uiTemp0) == 1 && uiTemp0 > 0)
+				{
+					uiKeepMipmaps = uiTemp0;
+				}
+				else
+				{
+					PrintUsage("-keepmips expects a positive integer argument.");
+					return 2;
+				}
+			}
 			else if(stricmp(argv[i], "-mfilter") == 0)
 			{
 				if(i + 1 < argc)
@@ -780,6 +797,8 @@ void PrintUsage(const vlChar *lpError, ...)
 	Print(" -dthreshold <integer>    (Source alpha above which a pixel is inside the shape.)\n");
 	Print(" -nomipmaps               (Don't generate mipmaps.)\n");
 	Print(" -mfilter <string>        (Mipmap filter to use.)\n");
+	Print(" -stripmips               (Strip all mipmaps, same as -keepmips 1.)\n");
+	Print(" -keepmips <integer>      (Strip down to this many mipmaps.)\n");
 	Print(" -bumpscale <single>      (Engine bump mapping scale to use.)\n");
 	Print(" -nothumbnail             (Don't generate thumbnail image.)\n");
 	Print(" -noreflectivity          (Don't calculate reflectivity.)\n");
@@ -795,6 +814,7 @@ void PrintUsage(const vlChar *lpError, ...)
 	Print("vtfcmd.exe -file \"C:\\texture1.bmp\" -file \"C:\\texture2.bmp\" -format \"dxt1\"\n");
 	Print("vtfcmd.exe -folder \"C:\\input\\*.tga\" -output \"C:\\output\" -recurse -pause\n");
 	Print("vtfcmd.exe -folder \"C:\\output\\*.vtf\" -output \"C:\\input\" -exportformat \"jpg\"\n");
+	Print("vtfcmd.exe -folder \"C:\\textures\\*.vtf\" -stripmips\n");
 
 	if(lpError != 0 && !bSilent)
 	{
@@ -1156,6 +1176,32 @@ void ProcessFile(vlChar *lpInputFile)
 		Print("  Reflectivity: %.2f, %.2f, %.2f\n", sR, sG, sB);
 		Print("  Format: %s\n\n", vlImageGetImageFormatInfo(vlImageGetFormat())->lpName);
 		Print("  Resources: %u\n", vlImageGetResourceCount());
+
+		if(uiKeepMipmaps != 0)
+		{
+			Print(" Stripping mipmaps:\n");
+
+			if(uiKeepMipmaps < vlImageGetMipmapCount() && !vlImageTruncateMipmaps(uiKeepMipmaps))
+			{
+				Print(" Error stripping mipmaps:\n%s\n\n", vlGetLastError());
+				return;
+			}
+
+			CreateOutputPath(lpVTFFile, lpInputFile, "vtf");
+
+			Print("  Writing %s...\n", lpVTFFile);
+			if(!vlImageSave(lpVTFFile))
+			{
+				Print(" Error creating vtf file:\n%s\n\n", vlGetLastError());
+				return;
+			}
+			Print("  %s written.\n\n", lpVTFFile);
+
+			Print("%s processed.\n\n", lpInputFile);
+
+			uiCompleted++;
+			return;
+		}
 
 		Print(" Creating texture:\n");
 

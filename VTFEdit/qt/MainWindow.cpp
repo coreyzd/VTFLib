@@ -46,6 +46,7 @@
 #include <QFormLayout>
 #include <QGroupBox>
 #include <QHBoxLayout>
+#include <QInputDialog>
 #include <QIcon>
 #include <QKeyEvent>
 #include <QLabel>
@@ -157,7 +158,7 @@ namespace VTFEdit
 			// keeo in sync with onImport
 			static const char *const szExtensions[] =
 			{
-				".bmp", ".dds", ".exr", ".gif", ".hdr", ".jpg", ".jpeg", ".pfm", ".png", ".tga"
+				".bmp", ".dds", ".exr", ".gif", ".hdr", ".ico", ".jpg", ".jpeg", ".pfm", ".png", ".psd", ".tga"
 			};
 
 			for(const char *const szExtension : szExtensions)
@@ -580,6 +581,10 @@ namespace VTFEdit
 		m_pRemoveHotspotAction = new QAction(tr("&Remove"), this);
 		connect(m_pRemoveHotspotAction, &QAction::triggered, this, &MainWindow::onRemoveHotspot);
 
+		m_pRemoveMipmapsAction = new QAction(tr("Remove &Mipmaps..."), this);
+		m_pRemoveMipmapsAction->setToolTip(tr("Discard the mipmap data."));
+		connect(m_pRemoveMipmapsAction, &QAction::triggered, this, &MainWindow::onRemoveMipmaps);
+
 		m_pCreateVmtFileAction = new QAction(tr("Create &VMT File"), this);
 		connect(m_pCreateVmtFileAction, &QAction::triggered, this, &MainWindow::onCreateVmtFile);
 
@@ -659,6 +664,9 @@ namespace VTFEdit
 		pHotspotMenu->setToolTipsVisible(true);
 		pHotspotMenu->addAction(m_pEditHotspotAction);
 		pHotspotMenu->addAction(m_pRemoveHotspotAction);
+
+		m_pTextureMenu->addSeparator();
+		m_pTextureMenu->addAction(m_pRemoveMipmapsAction);
 
 		QMenu *pOptionsMenu = menuBar()->addMenu(tr("&Options"));
 		pOptionsMenu->addAction(m_pAutoCreateVmtFileAction);
@@ -1743,6 +1751,40 @@ namespace VTFEdit
 		m_pVTFFile->SetResourceData(VTF_RSRC_SHEET, 0, nullptr);
 
 		updateResourceList();
+		onVtfPropertyChanged();
+	}
+
+	void MainWindow::onRemoveMipmaps()
+	{
+		if(m_pVTFFile == nullptr)
+		{
+			return;
+		}
+
+		const int iMipmapCount = static_cast<int>(m_pVTFFile->GetMipmapCount());
+		if(iMipmapCount <= 1)
+		{
+			QMessageBox::information(this, QApplication::applicationName(), tr("This texture has no mipmaps to remove."));
+			return;
+		}
+
+		bool bOk = false;
+		const int iKeep = QInputDialog::getInt(this, QApplication::applicationName(),
+			tr("Mipmap levels to keep (1 keeps only the full size image, currently %1):").arg(iMipmapCount),
+			1, 1, iMipmapCount - 1, 1, &bOk);
+		if(!bOk)
+		{
+			return;
+		}
+
+		if(!m_pVTFFile->TruncateMipmaps(static_cast<vlUInt>(iKeep)))
+		{
+			QMessageBox::critical(this, QApplication::applicationName(),
+				tr("Error removing mipmaps:\n%1").arg(QString::fromLatin1(vlGetLastError())));
+			return;
+		}
+
+		showVtfFile(m_pVTFFile);
 		onVtfPropertyChanged();
 	}
 
@@ -3086,10 +3128,10 @@ namespace VTFEdit
 		// keep in sync with IsImportableFileName
 		const QStringList sFileNames = QFileDialog::getOpenFileNames(this, tr("Import"),
 			FileDialogHistory::s_sImportDirectory,
-			tr("Supported Files (*.bmp *.dds *.exr *.gif *.hdr *.jpg *.jpeg *.pfm *.png *.tga);;"
+			tr("Supported Files (*.bmp *.dds *.exr *.gif *.hdr *.ico *.jpg *.jpeg *.pfm *.png *.psd *.tga);;"
 				"BMP Files (*.bmp);;DDS Files (*.dds);;EXR Files (*.exr);;GIF Files (*.gif);;"
-				"HDR Files (*.hdr);;JPEG Files (*.jpg *.jpeg);;PFM Files (*.pfm);;"
-				"PNG Files (*.png);;TGA Files (*.tga);;"
+				"HDR Files (*.hdr);;ICO Files (*.ico);;JPEG Files (*.jpg *.jpeg);;PFM Files (*.pfm);;"
+				"PNG Files (*.png);;PSD Files (*.psd);;TGA Files (*.tga);;"
 				"All Files (*.*)"));
 
 		if(!sFileNames.isEmpty())
@@ -3100,13 +3142,43 @@ namespace VTFEdit
 		}
 	}
 
+	QString MainWindow::getExportFileName(const QString &sTitle)
+	{
+		const QStringList sFilters = {
+			tr("BMP Files (*.bmp)"), tr("EXR Files (*.exr)"), tr("HDR Files (*.hdr)"),
+			tr("JPEG Files (*.jpg *.jpeg)"), tr("PFM Files (*.pfm)"), tr("PNG Files (*.png)"),
+			tr("TGA Files (*.tga)") };
+
+		const QString sPattern = QStringLiteral("*.") + FileDialogHistory::s_sExportExtension;
+		QString sSelectedFilter = sFilters.first();
+		for(const QString &sFilter : sFilters)
+		{
+			if(sFilter.contains(sPattern + QLatin1Char(' ')) || sFilter.contains(sPattern + QLatin1Char(')')))
+			{
+				sSelectedFilter = sFilter;
+				break;
+			}
+		}
+
+		const QString sBaseName = QFileInfo(m_sFileName).completeBaseName();
+		const QString sFileName = QFileDialog::getSaveFileName(this, sTitle,
+			FileDialogHistory::path(FileDialogHistory::s_sExportDirectory,
+				sBaseName.isEmpty() ? sBaseName : sBaseName + QLatin1Char('.') + FileDialogHistory::s_sExportExtension),
+			sFilters.join(QStringLiteral(";;")), &sSelectedFilter);
+
+		if(!sFileName.isEmpty())
+		{
+			const QString sExtension = QFileInfo(sFileName).suffix().toLower();
+			if(!sExtension.isEmpty())
+				FileDialogHistory::s_sExportExtension = sExtension;
+		}
+
+		return sFileName;
+	}
+
 	void MainWindow::onExport()
 	{
-		const QString sFileName = QFileDialog::getSaveFileName(this, tr("Export"),
-			FileDialogHistory::path(FileDialogHistory::s_sExportDirectory,
-				QFileInfo(m_sFileName).completeBaseName()),
-			tr("BMP Files (*.bmp);;EXR Files (*.exr);;HDR Files (*.hdr);;JPEG Files (*.jpg *.jpeg);;"
-				"PFM Files (*.pfm);;PNG Files (*.png);;TGA Files (*.tga)"));
+		const QString sFileName = getExportFileName(tr("Export"));
 
 		if(!sFileName.isEmpty())
 		{
@@ -3118,11 +3190,7 @@ namespace VTFEdit
 
 	void MainWindow::onExportAll()
 	{
-		const QString sFileName = QFileDialog::getSaveFileName(this, tr("Export All"),
-			FileDialogHistory::path(FileDialogHistory::s_sExportDirectory,
-				QFileInfo(m_sFileName).completeBaseName()),
-			tr("BMP Files (*.bmp);;EXR Files (*.exr);;HDR Files (*.hdr);;JPEG Files (*.jpg *.jpeg);;"
-				"PFM Files (*.pfm);;PNG Files (*.png);;TGA Files (*.tga)"));
+		const QString sFileName = getExportFileName(tr("Export All"));
 
 		if(!sFileName.isEmpty())
 		{
@@ -3907,6 +3975,11 @@ namespace VTFEdit
 				if(QDir(sVal).exists())
 					FileDialogHistory::s_sExportDirectory = sVal;
 			}
+			else if(sArg.compare(QLatin1String("VTFEdit.LastExportExtension"), Qt::CaseInsensitive) == 0)
+			{
+				if(!sVal.isEmpty())
+					FileDialogHistory::s_sExportExtension = sVal.toLower();
+			}
 			// old configs shared one directory for import and export
 			else if(sArg.compare(QLatin1String("VTFEdit.LastImageDirectory"), Qt::CaseInsensitive) == 0)
 			{
@@ -4125,6 +4198,7 @@ namespace VTFEdit
 		Stream << "VTFEdit.LastFileDirectory = " << FileDialogHistory::s_sFileDirectory << "\n";
 		Stream << "VTFEdit.LastImportDirectory = " << FileDialogHistory::s_sImportDirectory << "\n";
 		Stream << "VTFEdit.LastExportDirectory = " << FileDialogHistory::s_sExportDirectory << "\n";
+		Stream << "VTFEdit.LastExportExtension = " << FileDialogHistory::s_sExportExtension << "\n";
 		Stream << "VmtEditor.FontFamily = " << m_VmtEditorSettings.sFontFamily << "\n";
 		Stream << "VmtEditor.FontSize = " << m_VmtEditorSettings.iFontSize << "\n";
 		Stream << "VmtEditor.TabSize = " << m_VmtEditorSettings.iTabSize << "\n";

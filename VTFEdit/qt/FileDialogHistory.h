@@ -30,6 +30,7 @@ namespace VTFEdit
 		inline QString s_sFileDirectory; // vtf and vmt
 		inline QString s_sImportDirectory; // imported images
 		inline QString s_sExportDirectory; // exported images
+		inline QString s_sExportExtension = QStringLiteral("png"); // last exported image type
 
 		// the path handed to file dialog
 		inline QString path(const QString &sDirectory, const QString &sSuggestedName)

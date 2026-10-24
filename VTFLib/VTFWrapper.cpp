@@ -606,6 +606,14 @@ VTFLIB_API vlBool vlImageGenerateAllMipmaps(VTFMipmapFilter MipmapFilter, vlBool
 	return Image->GenerateMipmaps(MipmapFilter, bSRGB);
 }
 
+VTFLIB_API vlBool vlImageTruncateMipmaps(vlUInt uiMipmapCount)
+{
+	if(Image == 0)
+		return vlFalse;
+
+	return Image->TruncateMipmaps(uiMipmapCount);
+}
+
 VTFLIB_API vlBool vlImageGenerateThumbnail(vlBool bSRGB)
 {
 	if(Image == 0)

@@ -139,6 +139,8 @@ Correct vtfcmd usage:
  -dthreshold <integer>    (Source alpha above which a pixel is inside the shape.)
  -nomipmaps               (Don't generate mipmaps.)
  -mfilter <string>        (Mipmap filter to use.)
+ -stripmips               (Strip all mipmaps, same as -keepmips 1.)
+ -keepmips <integer>      (Strip down to this many mipmaps.)
  -bumpscale <single>      (Engine bump mapping scale to use.)
  -nothumbnail             (Don't generate thumbnail image.)
  -noreflectivity          (Don't calculate reflectivity.)
@@ -154,6 +156,7 @@ Example vtfcmd usage:
 vtfcmd.exe -file "C:\texture1.bmp" -file "C:\texture2.bmp" -format "dxt1"
 vtfcmd.exe -folder "C:\input\*.tga" -output "C:\output" -recurse -pause
 vtfcmd.exe -folder "C:\output\*.vtf" -output "C:\input" -exportformat "jpg"
+vtfcmd.exe -folder "C:\textures\*.vtf" -stripmips
 ```
 
 ## Program Copyright-Permissions
